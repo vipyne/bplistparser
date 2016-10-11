@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 uint32_t read_big_endian_32 (FILE* file)
 {
@@ -22,6 +23,16 @@ uint32_t read_big_endian_32 (FILE* file)
 	errno = ENOENT;
 	printf("eof error %d, file error %d\n", feof(file), ferror(file));
 	return 0;
+}
+
+void seek_from_end (FILE* file, size_t offset)
+{
+	int seekResult = fseek(file, offset, SEEK_END);
+	if (seekResult)
+	{ 
+		printf("seek result: %d\n", seekResult);
+		exit(1);
+	}
 }
 
 int main (int argc, char *argv[])
@@ -57,14 +68,7 @@ int main (int argc, char *argv[])
 		return 1;
 	}	
 
-	long e_offsetFromEnd = -4; // reading from end of file, so must be negative number
-	int seekResult = fseek(filePointer, e_offsetFromEnd, SEEK_END);
-	if (seekResult)
-	{ 
-		printf("seek result: %d\n", seekResult);
-		return 1;
-	}
-
+	seek_from_end(filePointer, -4);
 	// reading bytes in big endian - reading in the offset of offset table
 	errno = 0;
 	uint32_t offsetOfOffsetTable = read_big_endian_32(filePointer);
@@ -76,14 +80,7 @@ int main (int argc, char *argv[])
 	}		
 
 	
-	e_offsetFromEnd = -12; // reading from end of file, so must be negative number
-	seekResult = fseek(filePointer, e_offsetFromEnd, SEEK_END);
-	if (seekResult)
-	{ 
-		printf("seek result: %d\n", seekResult);
-		return 1;
-	}
-
+	seek_from_end(filePointer, -12);
 	// reading bytes in big endian - reading in the index of root object
 	errno = 0;
 	uint32_t indexOfRootObject = read_big_endian_32(filePointer);
@@ -95,14 +92,7 @@ int main (int argc, char *argv[])
 	}
 
 			
-	e_offsetFromEnd = -20; // reading from end of file, so must be negative number
-	seekResult = fseek(filePointer, e_offsetFromEnd, SEEK_END);
-	if (seekResult)
-	{ 
-		printf("seek result: %d\n", seekResult);
-		return 1;
-	}
-
+	seek_from_end(filePointer, -20);
 	// reading bytes in big endian - reading in the item count
 	errno = 0;
 	uint32_t item_count = read_big_endian_32(filePointer);

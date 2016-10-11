@@ -7,8 +7,8 @@
 #include <stdlib.h>
 
 struct Metadata {
-	uint32_t offsetOfOffsetTable;
-	uint32_t indexOfRootObject;
+	uint32_t offset_of_offset_table;
+	uint32_t index_of_root_object;
 	uint32_t item_count;
 
 	uint8_t bytes_per_index; // 1, 2
@@ -34,12 +34,22 @@ uint32_t read_big_endian_32 (FILE* file)
 	return 0;
 }
 
+void seek_from_begin (FILE* file, size_t offset)
+{
+	int seek_result = fseek(file, offset, SEEK_SET);
+	if (seek_result)
+	{ 
+		printf("seek result: %d\n", seek_result);
+		exit(1);
+	}
+}
+
 void seek_from_end (FILE* file, size_t offset)
 {
-	int seekResult = fseek(file, offset, SEEK_END);
-	if (seekResult)
+	int seek_result = fseek(file, offset, SEEK_END);
+	if (seek_result)
 	{ 
-		printf("seek result: %d\n", seekResult);
+		printf("seek result: %d\n", seek_result);
 		exit(1);
 	}
 }
@@ -51,20 +61,20 @@ struct Metadata get_metadata_values (FILE* file)
 	seek_from_end(file, -4);
 	// reading bytes in big endian - reading in the offset of offset table
 	errno = 0;
-	file_metadata.offsetOfOffsetTable = read_big_endian_32(file);
+	file_metadata.offset_of_offset_table = read_big_endian_32(file);
 	if (errno != 0)
 	{
-		printf("offset of offset table: %d\n", file_metadata.offsetOfOffsetTable);
+		printf("offset of offset table: %d\n", file_metadata.offset_of_offset_table);
 		printf("error: %d\n", errno);
 	}		
 
 	seek_from_end(file, -12);
 	// reading bytes in big endian - reading in the index of root object
 	errno = 0;
-	file_metadata.indexOfRootObject = read_big_endian_32(file);
+	file_metadata.index_of_root_object = read_big_endian_32(file);
 	if (errno != 0)
 	{
-		printf("index of root object: %d\n", file_metadata.indexOfRootObject);
+		printf("index of root object: %d\n", file_metadata.index_of_root_object);
 		printf("error: %d\n", errno);
 	}
 			
@@ -97,37 +107,46 @@ int main (int argc, char *argv[])
 		return 1;
 	}
 
-	FILE *filePointer;
-	// r - read
-	// b - binary mode
-	filePointer = fopen(argv[1], "rb");
-	if (filePointer == NULL)
+	FILE *file_pointer;
+	// b - binary mode, r - read
+	file_pointer = fopen(argv[1], "rb");
+	if (file_pointer == NULL)
 	{
 		printf("file not readable because: %d\n", errno);
 		return 1;
 	}
 
-	char firstEightBytes[9];
-	firstEightBytes[8] = 0;	// set null terminator
-	fread(&firstEightBytes, 1, 8, filePointer);
+	char first_eight_bytes[9];
+	first_eight_bytes[8] = 0;	// set null terminator
+	fread(&first_eight_bytes, 1, 8, file_pointer);
 	
-	int res = strncmp(firstEightBytes, "bplist00", 8);
+	int res = strncmp(first_eight_bytes, "bplist00", 8);
 	
 	if (res)
 	{
 		printf("result: %d\n", res);
-		printf("first 8 bytes are: %s\n", firstEightBytes); 
+		printf("first 8 bytes are: %s\n", first_eight_bytes); 
 		return 1;
 	}	
 	
-	struct Metadata this_file_metadata = get_metadata_values(filePointer);	
+	struct Metadata this_file_metadata = get_metadata_values(file_pointer);	
 
-	printf("offset %d\n", this_file_metadata.offsetOfOffsetTable);
-	printf("indexOfRootObject %d\n", this_file_metadata.indexOfRootObject);
+	// print out struct for dev purposes
+	printf("offset %d\n", this_file_metadata.offset_of_offset_table);
+	printf("index_of_root_object %d\n", this_file_metadata.index_of_root_object);
 	printf("item_count %d\n", this_file_metadata.item_count);
 
 	printf("bytes_per_index %d\n", this_file_metadata.bytes_per_index); // 1, 2
 	printf("bytes_per_offset %d\n", this_file_metadata.bytes_per_offset); // 1, 2, 3, or 4
 
+	
+	seek_from_begin(file_pointer, this_file_metadata.offset_of_offset_table + (this_file_metadata.bytes_per_offset * this_file_metadata.index_of_root_object));
+
+	uint8_t offset_of_root_object = 0;
+	
+	fread(&offset_of_root_object, 1, 1, file_pointer);
+	
+	printf("offset_of_root_object : %d\n", offset_of_root_object);
+	
 	return 0;
 }

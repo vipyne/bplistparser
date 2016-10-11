@@ -80,8 +80,12 @@ struct Metadata get_metadata_values (FILE* file)
 
 	uint8_t length_params[2];
 	seek_from_end(file, -26);		
-	fread(&length_params, 1, 2, file);
-	printf("length_params: %d, %d\n", length_params[0], length_params[1]);
+	int res = fread(&length_params, 1, 2, file);
+	file_metadata.bytes_per_offset = length_params[0];
+	file_metadata.bytes_per_index = length_params[1];
+	
+	if (res != 2)
+		printf("error - length_params: %d, %d\n", length_params[0], length_params[1]);
 	
 	return file_metadata;
 }

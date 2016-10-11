@@ -75,5 +75,46 @@ int main (int argc, char *argv[])
 		printf("error: %d\n", errno);
 	}		
 
+	
+	e_offsetFromEnd = -12; // reading from end of file, so must be negative number
+	seekResult = fseek(filePointer, e_offsetFromEnd, SEEK_END);
+	if (seekResult)
+	{ 
+		printf("seek result: %d\n", seekResult);
+		return 1;
+	}
+
+	// reading bytes in big endian - reading in the index of root object
+	errno = 0;
+	uint32_t indexOfRootObject = read_big_endian_32(filePointer);
+	if (errno == 0)
+	{
+		printf("index of root object: %d\n", indexOfRootObject);
+	} else {
+		printf("error: %d\n", errno);
+	}
+
+			
+	e_offsetFromEnd = -20; // reading from end of file, so must be negative number
+	seekResult = fseek(filePointer, e_offsetFromEnd, SEEK_END);
+	if (seekResult)
+	{ 
+		printf("seek result: %d\n", seekResult);
+		return 1;
+	}
+
+	// reading bytes in big endian - reading in the item count
+	errno = 0;
+	uint32_t item_count = read_big_endian_32(filePointer);
+	if (errno == 0)
+	{
+		printf("item count: %d\n", item_count);
+	} else {
+		printf("error: %d\n", errno);
+	}
+
+	uint8_t length_params[2];
+			
+
 	return 0;
 }

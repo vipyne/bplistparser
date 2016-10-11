@@ -104,7 +104,9 @@ int main (int argc, char *argv[])
 	}
 
 	uint8_t length_params[2];
-			
+	seek_from_end(filePointer, -26);		
+	fread(&length_params, 1, 2, filePointer);
+	printf("length_params: %d, %d\n", length_params[0], length_params[1]);
 
 	return 0;
 }
